@@ -27,8 +27,12 @@ if [[ -f "${DEPLOY_PATH}/artisan" ]] && [[ -f "${DEPLOY_PATH}/composer.json" ]];
   fi
 fi
 
-echo "Running preflight..."
-bash "${SCRIPT_DIR}/preflight-check.sh"
+if [[ "${SKIP_PREFLIGHT:-}" == "yes" ]]; then
+  echo "Skipping preflight (SKIP_PREFLIGHT=yes)"
+else
+  echo "Running preflight..."
+  bash "${SCRIPT_DIR}/preflight-check.sh"
+fi
 
 if [[ -d "${DEPLOY_PATH}" ]] && [[ -f "${DEPLOY_PATH}/.env" ]]; then
   echo "Creating pre-deploy backup..."

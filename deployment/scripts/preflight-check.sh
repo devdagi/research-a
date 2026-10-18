@@ -53,7 +53,14 @@ check_php() {
 
 check_composer() {
   if command -v composer >/dev/null 2>&1; then
-    log_ok "Composer: $(composer --version 2>/dev/null | head -1)"
+    # Avoid composer network/update prompts that hang on EC2.
+    local ver
+    ver="$(COMPOSER_DISABLE_NETWORK=1 timeout 10 composer -V 2>/dev/null | head -1 || true)"
+    if [[ -n "${ver}" ]]; then
+      log_ok "Composer: ${ver}"
+    else
+      log_ok "Composer present ($(command -v composer))"
+    fi
   else
     log_warn "Composer not in PATH (required on deploy host or CI)"
   fi
