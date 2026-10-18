@@ -1,0 +1,16 @@
+[Unit]
+Description=Company Device Manager — Laravel scheduler (testing, one-shot)
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/testing
+Environment=APP_ENV=production
+
+ExecStart=/usr/bin/php artisan schedule:run --no-interaction --verbose
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cdm-scheduler
