@@ -28,11 +28,12 @@ if [[ -f "${DEPLOY_PATH}/artisan" ]] && [[ -f "${DEPLOY_PATH}/composer.json" ]];
 fi
 
 echo "Running preflight..."
-"${SCRIPT_DIR}/preflight-check.sh"
+bash "${SCRIPT_DIR}/preflight-check.sh"
 
 if [[ -d "${DEPLOY_PATH}" ]] && [[ -f "${DEPLOY_PATH}/.env" ]]; then
   echo "Creating pre-deploy backup..."
-  CDM_DEPLOY_PATH="${DEPLOY_PATH}" CDM_BACKUP_ROOT="${BACKUP_ROOT}" "${SCRIPT_DIR}/backup.sh"
+  CDM_DEPLOY_PATH="${DEPLOY_PATH}" CDM_BACKUP_ROOT="${BACKUP_ROOT}" \
+    bash "${SCRIPT_DIR}/backup.sh" || echo "WARN: backup skipped"
 fi
 
 mkdir -p "${DEPLOY_PATH}"
@@ -47,6 +48,10 @@ RSYNC_EXCLUDES=(
   --exclude '.git/'
   --exclude 'vendor/'
 )
+
+if ! command -v rsync >/dev/null 2>&1; then
+  apt-get install -y rsync >/dev/null 2>&1 || true
+fi
 
 if command -v rsync >/dev/null 2>&1; then
   rsync -a --delete "${RSYNC_EXCLUDES[@]}" "${SOURCE}/" "${DEPLOY_PATH}/"
