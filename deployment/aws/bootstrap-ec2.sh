@@ -71,10 +71,18 @@ echo "==> First .env"
 mkdir -p /var/www/html/testing
 if [[ ! -f /var/www/html/testing/.env ]]; then
   cp "${REPO_ROOT}/deployment/aws/env.aws.example" /var/www/html/testing/.env
-  # Escape sed special chars in password
-  SAFE_PASS="$(printf '%s' "${DB_PASS}" | sed -e 's/[\/&]/g')"
-  sed -i "s/CHANGE_ME_STRONG_PASSWORD/${SAFE_PASS}/" /var/www/html/testing/.env
 fi
+# Always inject DB password without sed (base64 passwords break s///).
+php -r '
+  $path = "/var/www/html/testing/.env";
+  $env = file_get_contents($path);
+  if ($env === false) { fwrite(STDERR, "Cannot read .env\n"); exit(1); }
+  $pass = $argv[1];
+  $env = str_replace("CHANGE_ME_STRONG_PASSWORD", $pass, $env);
+  // Also update existing DB_PASSWORD= line if placeholder already gone.
+  $env = preg_replace("/^DB_PASSWORD=.*/m", "DB_PASSWORD=" . $pass, $env, 1);
+  file_put_contents($path, $env);
+' "${DB_PASS}"
 
 echo "==> Deploy app"
 cd "${REPO_ROOT}"
